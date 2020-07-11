@@ -1,52 +1,54 @@
-#import packages
-from keras.datasets import mnist
-from keras.utils.np_utils import to_categorical
-from keras.models import Sequential
-from keras.layers import Conv2D,MaxPooling2D,Flatten,Dense
-from keras.optimizers import Adam
-
-
-#load dataset
-dataset = mnist.load_data('projDataset.db')
-
-#generating the training and testing sets
-(X_train , y_train), (X_test , y_test) = dataset
-
-#converting the by-default 28*28 input images into 1D 784 pixel images
-reX_train = X_train.reshape(-1 , 28*28)
-reX_test = X_test.reshape(-1 , 28*28)
-
-#Force pixel precision to keras by-default 32bit
-X_train = reX_train.astype('float32')
-X_test = reX_test.astype('float32')
-
-#one hot encoding the outputs
-y_train = to_categorical(y_train)
-y_test = to_categorical(y_test)
-
-#create the CNN model
+# create model
 model = Sequential()
-model.add(Dense(units=256, input_dim=28*28, activation='relu'))
-model.add(Dense(units=128, activation='relu'))
-model.add(Dense(units=64, activation='relu'))
-model.add(Dense(units=32, activation='relu'))
-model.add(Dense(units=10, activation='softmax'))
 
-#get the parameters for the model
-model.summary()
 
-#compile the model
-model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=['accuracy'])
+convlayers = int(input())
+first_layer_nfilter = int(input())
+first_layer_filter_size = int(input())
+first_layer_pool_size = int(input())
 
-#train the model
-model.fit(X_train,y_train,epochs=10,verbose=0,validation_data=(X_test,y_test))
+this_layer = 'No. of convolve layers : ' + str(convlayers)
+this_layer = this_layer + '\nLayer 1'
+this_layer = this_layer + '\nNo of filters : ' + str(first_layer_nfilter) + '\nFilter Size : ' + str(first_layer_filter_size) + '\nPool Size : ' + str(first_layer_pool_size)
 
-#get the model accuracy
-scores = model.evaluate(X_test,y_test,verbose=0)
-acc = scores[1]*100
-acc = int(acc)
+model.add(Conv2D(first_layer_nfilter, (first_layer_filter_size, first_layer_filter_size),
+                 padding = "same",
+                 input_shape = input_shape))
+model.add(Activation("relu"))
+model.add(MaxPooling2D(pool_size = (first_layer_pool_size, first_layer_pool_size)))
 
-#store the accuracy in a file
-f = open("Accuracy.txt",'w+')
-f.write(str(acc))
-f.close()
+#Subsequent CRP sets
+for i in range(1,convlayers):
+    nfilters = int(input())
+    filter_size = int(input())
+    pool_size = int(input())
+    this_layer = this_layer + '\nLayer ' + str(i+1) + ': '
+    this_layer = this_layer + '\nNo of filters : ' + str(nfilters) + '\nFilter Size : ' + str(filter_size) + '\nPool Size : ' + str(pool_size)
+    model.add(Conv2D(nfilters, (filter_size, filter_size),padding = "same"))
+    model.add(Activation("relu"))
+    model.add(MaxPooling2D(pool_size = (pool_size, pool_size)))
+
+# Fully connected layers (w/ RELU)
+model.add(Flatten())
+
+fc_input = int(input())
+
+this_layer = this_layer + '\nNo. of FC Layers : ' + str(fc_input+1)
+
+for i in range(0,fc_input):
+    no_neurons = int(input())
+    this_layer = this_layer + '\nNeurons in Layer ' + str(i+1) + ' : ' + str(no_neurons)
+    model.add(Dense(no_neurons))
+    model.add(Activation("relu"))
+
+# Softmax (for classification)
+model.add(Dense(num_classes))
+model.add(Activation("softmax"))
+           
+this_layer = this_layer + '\nNeurons in Layer ' + str(fc_input + 1) + ' : ' + str(num_classes)
+
+model.compile(loss = 'categorical_crossentropy',
+              optimizer = keras.optimizers.Adadelta(),
+              metrics = ['accuracy'])
+    
+print(model.summary())
