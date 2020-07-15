@@ -104,7 +104,7 @@ print('Test accuracy:', scores[1])
 accuracy = round(scores[1]*100,3)
 #print(accuracy)
 
-accuracyfile = open("/mlops/accuracy.txt","w")
+accuracyfile = open("/mlt3/accuracy.txt","w")
 accuracyfile.write(str(accuracy))
 accuracyfile.close()
 
